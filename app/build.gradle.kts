@@ -7,7 +7,7 @@ plugins {
 
 android {
   namespace = "me.farahani.jiringtest"
-  compileSdk = 33
+  compileSdk = 34
 
   defaultConfig {
     applicationId = "me.farahani.jiringtest"
@@ -40,7 +40,7 @@ android {
     compose = true
   }
   composeOptions {
-    kotlinCompilerExtensionVersion = "1.4.3"
+    kotlinCompilerExtensionVersion = "1.5.1"
   }
   packaging {
     resources {
@@ -52,18 +52,26 @@ android {
 dependencies {
 
   implementation(platform(libs.compose.bom))
+  implementation(platform(libs.okhttp.bom))
+  implementation(libs.bundles.retrofit)
   implementation(libs.activity.compose)
   implementation(libs.core.ktx)
   implementation(libs.lifecycle.runtime.ktx)
   implementation(libs.material3)
-  implementation(libs.retrofit)
+  api(libs.kotlin.coroutines)
+  implementation(libs.okhttp)
   implementation(libs.kotlin.serialization)
   implementation(libs.ui.graphics)
   implementation(libs.ui.tooling.preview)
   implementation(libs.ui)
+  debugImplementation(libs.okhttp.loginterceptor)
   debugImplementation(libs.ui.tooling)
   debugImplementation(libs.ui.test.manifest)
+  testApi(libs.kotlin.test.junit)
   testImplementation(libs.junit)
+  testImplementation(libs.kotlin.coroutines.test)
+  testImplementation(libs.okhttp.mockwebserver)
+  testImplementation(libs.turbine)
   androidTestImplementation(platform(libs.compose.bom))
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.espresso.core)

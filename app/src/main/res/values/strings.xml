@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Jiring Test</string>
+    <string name="error_invalid_username">Invalid username</string>
 </resources>

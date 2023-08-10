@@ -7,10 +7,13 @@ core-ktx = "1.10.1"
 coroutines = "1.7.2"
 espresso-core = "3.5.1"
 junit = "4.13.2"
-kotlin-serialization = "1.5.1"
 kotlin = "1.9.0"
+kotlin-serialization = "1.5.1"
 lifecycle-runtime-ktx = "2.6.1"
+okhttp = "4.11.0"
 retrofit = "2.9.0"
+retrofit-kotlin-serialization = "1.0.0"
+turbine = "1.0.0"
 
 [libraries]
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
@@ -20,10 +23,18 @@ core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlin-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlin-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin-serialization" }
+kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
+okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp"}
+okhttp-loginterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor"}
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver"}
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-kotlin-serialization = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofit-kotlin-serialization" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -37,4 +48,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [bundles]
-
+retrofit = ["retrofit", "retrofit-kotlin-serialization"]
