@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Jiring Test</string>
     <string name="error_invalid_username">Invalid username</string>
+    <string name="button_login">Login</string>
+    <string name="hint_username">Username</string>
+    <string name="todolist_empty">No todo to show</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="menu_logout">Logout</string>
 </resources>

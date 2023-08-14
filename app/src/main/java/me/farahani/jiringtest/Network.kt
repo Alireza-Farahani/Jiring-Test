@@ -2,13 +2,14 @@ package me.farahani.jiringtest
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import okhttp3.Interceptor
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 import java.io.IOException
 
@@ -19,12 +20,17 @@ interface NetworkParams {
 
 interface UserService {
   @GET("/todos")
-  suspend fun userTodos(@Query("userId") userId: Int): Response<List<NetworkTodo>>
+  suspend fun userTodos(@Query("userId") userId: Int): Response<List<NetworkTodoDto>>
 }
 
 interface UsersService {
   @GET("/users")
   suspend fun loginUser(@Query("username") username: String): Response<ResponseBody>
+}
+
+interface TodoService {
+  @PUT("/todos/{id}")
+  suspend fun updateTodo(@Path("id") id: Int, @Body todo: NetworkTodoDto): Response<NetworkTodoDto>
 }
 
 @Serializable
@@ -39,13 +45,19 @@ data class NetworkUserDto(
   val email: NetworkEmail,
 )
 
-class NetworkUser(private val dto: NetworkUserDto, private val api: UserService) : User {
+class NetworkUser(
+  dto: NetworkUserDto,
+  private val api: UserService,
+//  private val todoApi: TodoService,
+  private val todoFactory: (NetworkTodoDto) -> NetworkTodo,
+) : User {
   override val id by dto::id
   override val name by dto::name
   override val username by dto::username
   override val email by dto::email
   override suspend fun todoList(): Result<List<Todo>> {
-    return errorHandle { api.userTodos(id) }
+    val result = errorHandle { api.userTodos(id) }
+    return result.map { it.map { dto -> todoFactory(dto) } }
   }
 }
 
@@ -54,20 +66,35 @@ class NetworkUser(private val dto: NetworkUserDto, private val api: UserService)
 value class NetworkEmail(override val value: String) : Email, CharSequence by value
 
 @Serializable
-data class NetworkTodo(
+data class NetworkTodoDto(
   @SerialName("userId")
-  override val userId: Int,
+  val userId: Int,
   @SerialName("id")
-  override val id: Int,
+  val id: Int,
   @SerialName("title")
-  override val title: String,
+  var title: String,
   @SerialName("completed")
-  override val isCompleted: Boolean,
-) : Todo
+  var isCompleted: Boolean,
+)
+
+class NetworkTodo(dto: NetworkTodoDto, private val api: TodoService) : Todo {
+  override val userId by dto::userId
+  override val id by dto::id
+  override val title by dto::title
+  override val isCompleted by dto::isCompleted
+
+  override suspend fun update(changes: Todo.UpdateParams.() -> Unit): Result<Todo> {
+    val updateParams = Todo.UpdateParams(title, isCompleted)
+    updateParams.changes()
+    val dto = NetworkTodoDto(userId, id, updateParams.title, updateParams.isComplete)
+    val result = errorHandle { api.updateTodo(id, dto) }
+    return result.map { NetworkTodo(it, api) }
+  }
+}
 
 class NetworkUsers(
   private val usersApi: UsersService,
-  private val userApi: UserService,
+  private val userFactory: (NetworkUserDto) -> NetworkUser,
   private val json: Json,
 ) : Users {
   override suspend fun login(username: String): Result<NetworkUser> {
@@ -80,16 +107,11 @@ class NetworkUsers(
     return when (val code = result.code()) {
       in 200..<300 -> {
         val body = result.body()!!.string()
-        try {
-          val userDto = json.decodeFromString<List<NetworkUserDto>>(body).first()
-          Result.success(NetworkUser(userDto, userApi))
-        } catch (e: SerializationException) {
-          val jo = json.parseToJsonElement(body).jsonObject
-          if (jo.isEmpty())
-            Result.failure(InvalidUsernameException())
-          else
-            throw SerializationException()
-        }
+        val userDtoList = json.decodeFromString<List<NetworkUserDto>>(body)
+        if (userDtoList.isEmpty())
+          Result.failure(InvalidUsernameException())
+        else
+          Result.success(userFactory(userDtoList.first()))
       }
 
       in 500..<600 -> Result.failure(ServerError(code))

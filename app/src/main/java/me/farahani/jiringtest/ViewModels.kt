@@ -1,12 +1,19 @@
 package me.farahani.jiringtest
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
 
 sealed interface LoginScreenState {
   data object Loading : LoginScreenState
@@ -15,12 +22,31 @@ sealed interface LoginScreenState {
 }
 
 class LoginViewModel(private val users: Users, private val session: Session) : ViewModel() {
+
+  companion object {
+    val Factory: ViewModelProvider.Factory = viewModelFactory {
+      initializer {
+//        val savedStateHandle = createSavedStateHandle()
+        val app =
+          (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as JiringApplication)
+        val serviceLocator = app.serviceLocator
+        LoginViewModel(serviceLocator.users, serviceLocator.session)
+      }
+    }
+  }
+
   private val _uiState: MutableStateFlow<LoginScreenState> = MutableStateFlow(LoginScreenState.IDLE)
   val uiState = _uiState.asStateFlow()
   private val _navigateToTodos = MutableSharedFlow<Unit>()
   val navigateToTodos = _navigateToTodos.asSharedFlow()
   private val _errorEvent = MutableSharedFlow<Throwable>()
   val errorEvent = _errorEvent.asSharedFlow()
+  var username by mutableStateOf("")
+    private set
+
+  fun updateUsername(newValue: String) {
+    username = newValue
+  }
 
   fun login(username: String) {
     viewModelScope.launch {
@@ -36,7 +62,7 @@ class LoginViewModel(private val users: Users, private val session: Session) : V
           when (it) {
             is InvalidUsernameException -> {
               _uiState.value = LoginScreenState.Error(
-                message = UIString.ResourceIdString(R.string.error_invalid_username)
+                message = UIString.IdString(R.string.error_invalid_username)
               )
             }
 
@@ -50,34 +76,63 @@ class LoginViewModel(private val users: Users, private val session: Session) : V
   }
 }
 
-sealed interface TodoListScreenState {
-  data object Loading : TodoListScreenState
-  data object IDLE : TodoListScreenState
-  data class Success(val todoList: List<Todo>) : TodoListScreenState
+
+data class TodoListScreenState(
+  val name: String,
+  val listState: TodoListState,
+)
+
+sealed interface TodoListState {
+  data object Loading : TodoListState
+  data class Ready(val todoList: List<Todo>) : TodoListState
 }
 
 class TodoListViewModel(private val session: Session) : ViewModel() {
-  private val _uiState: MutableStateFlow<TodoListScreenState> =
-    MutableStateFlow(TodoListScreenState.IDLE)
+
+  companion object {
+    val Factory: ViewModelProvider.Factory = viewModelFactory {
+      initializer {
+//        val savedStateHandle = createSavedStateHandle()
+        val app =
+          (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as JiringApplication)
+        val serviceLocator = app.serviceLocator
+        TodoListViewModel(serviceLocator.session)
+      }
+    }
+  }
+
+  private var currentTodoList = mutableListOf<Todo>()
+
+  private val initialState =
+    TodoListScreenState(session.currentUser?.name.orEmpty(), TodoListState.Ready(emptyList()))
+  private val _uiState: MutableStateFlow<TodoListScreenState> = MutableStateFlow(initialState)
   val uiState = _uiState.asStateFlow()
+
   private val _logoutEvent = MutableSharedFlow<Unit>()
   val logoutEvent = _logoutEvent.asSharedFlow()
+
   private val _errorEvent = MutableSharedFlow<Throwable>()
   val errorEvent = _errorEvent.asSharedFlow()
 
-  private val user get() = requireNotNull(session.currentUser) {
-    "Session's user is null. Doing something after logout?"
+  private val user
+    get() = requireNotNull(session.currentUser) {
+      "Session's user is null. Doing something after logout?"
+    }
+
+  init {
+    userTodoList()
   }
 
   fun userTodoList() {
     viewModelScope.launch {
-      _uiState.value = TodoListScreenState.Loading
+      _uiState.value = _uiState.value.copy(listState = TodoListState.Loading)
       user.todoList()
         .onSuccess {
-          _uiState.value = TodoListScreenState.Success(it)
+          currentTodoList = it.toMutableList()
+          _uiState.value = _uiState.value.copy(listState = TodoListState.Ready(it))
         }
         .onFailure {
-          _uiState.value = TodoListScreenState.IDLE
+          _uiState.value = _uiState.value.copy(listState = TodoListState.Ready(emptyList()))
           _errorEvent.emit(it)
         }
     }
@@ -87,6 +142,24 @@ class TodoListViewModel(private val session: Session) : ViewModel() {
     session.logout()
     viewModelScope.launch {
       _logoutEvent.emit(Unit)
+    }
+  }
+
+  fun onTodoCompleteChanged(todo: Todo, isComplete: Boolean) {
+    val currentListState = uiState.value.listState
+    require(currentListState is TodoListState.Ready)
+
+    viewModelScope.launch {
+      todo.update { this.isComplete = isComplete }
+        .onSuccess {
+          val idx = currentTodoList.indexOfFirst { elem -> elem.id == todo.id }
+          currentTodoList[idx] = it
+          _uiState.value =
+            _uiState.value.copy(listState = TodoListState.Ready(currentTodoList.toList()))
+        }
+        .onFailure {
+          _errorEvent.emit(it)
+        }
     }
   }
 }

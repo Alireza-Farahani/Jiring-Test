@@ -42,7 +42,7 @@ class LoginViewModelTest {
   }
 
   @Test
-  fun `navigation event dispatched on successful login`() = runTest {
+  fun `navigation event dispatched on Ready login`() = runTest {
     val vm = LoginViewModel(stubUsers, Session())
     stubUsers.response = Result.success(testUser)
     vm.navigateToTodos.test {
@@ -139,9 +139,9 @@ class TodoListViewModelTest {
   }
 
   @Test
-  fun `initial state is IDLE`() = runTest {
+  fun `initial state is empty Ready`() = runTest {
     val vm = TodoListViewModel(Session(stubUser))
-    assertEquals(TodoListScreenState.IDLE, vm.uiState.value)
+    assertEquals(TodoListState.Ready(emptyList()), vm.uiState.value.listState)
   }
 
   @Test
@@ -159,43 +159,43 @@ class TodoListViewModelTest {
     vm.uiState.test {
       vm.userTodoList()
       skipItems(1) // IDLE state
-      assertEquals(TodoListScreenState.Loading, awaitItem())
+      assertEquals(TodoListState.Loading, awaitItem().listState)
       cancelAndIgnoreRemainingEvents()
     }
   }
 
   @Test
-  fun `state becomes SUCCESSFUL on receiving correct response`() = runTest {
+  fun `state becomes Ready on receiving correct response`() = runTest {
     stubUser.todoResponse = Result.success(emptyList())
     val vm = TodoListViewModel(Session(stubUser))
     vm.userTodoList()
     advanceUntilIdle()
 
-    val state = vm.uiState.value
-    assertIs<TodoListScreenState.Success>(state)
-    assertEquals(emptyList(), state.todoList)
+    val listState = vm.uiState.value.listState
+    assertIs<TodoListState.Ready>(listState)
+    assertEquals(emptyList(), listState.todoList)
   }
 
   @Test
-  fun `state becomes IDLE with error event on network error`() = runTest {
+  fun `state becomes empty Ready with error event on network error`() = runTest {
     stubUser.todoResponse = Result.failure(NetworkError())
     val vm = TodoListViewModel(Session(stubUser))
     vm.errorEvent.test {
       vm.userTodoList()
       assertIs<NetworkError>(awaitItem())
     }
-    assertEquals(TodoListScreenState.IDLE, vm.uiState.value)
+    assertEquals(TodoListState.Ready(emptyList()), vm.uiState.value.listState)
   }
 
   @Test
-  fun `state becomes IDLE with error event on server error`() = runTest {
+  fun `state becomes empty Ready with error event on server error`() = runTest {
     stubUser.todoResponse = Result.failure(ServerError(500))
     val vm = TodoListViewModel(Session(stubUser))
     vm.errorEvent.test {
       vm.userTodoList()
       assertIs<ServerError>(awaitItem())
     }
-    assertEquals(TodoListScreenState.IDLE, vm.uiState.value)
+    assertEquals(TodoListState.Ready(emptyList()), vm.uiState.value.listState)
   }
 }
 

@@ -28,4 +28,8 @@ interface Todo {
   val id: Int
   val title: String
   val isCompleted: Boolean
+
+  data class UpdateParams(var title: String, var isComplete: Boolean)
+
+  suspend fun update(changes: UpdateParams.() -> Unit): Result<Todo>
 }

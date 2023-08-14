@@ -2,7 +2,6 @@ package me.farahani.jiringtest
 
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.SocketPolicy
@@ -15,12 +14,11 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 
-class UsersServiceTest {
-  private lateinit var usersService: UsersService
-  private lateinit var userService: UserService
-  private lateinit var json: Json
+class NetworkUsersTest {
+  private lateinit var users: NetworkUsers
 
-  @JvmField @Rule
+  @JvmField
+  @Rule
   val serverRule = MockWebServerRule()
 
   @Before
@@ -31,9 +29,7 @@ class UsersServiceTest {
     }
     val sl = ServiceLocator()
     sl.createRetrofit(networkParams)
-    usersService = sl.usersService
-    userService = sl.userService
-    json = sl.json
+    users = NetworkUsers(sl.usersApi, sl.userFactory, sl.json)
   }
 
   @Test
@@ -69,7 +65,7 @@ class UsersServiceTest {
       ).addHeader("Content-Type", "application/json; charset=utf-8")
     )
 
-    val user = NetworkUsers(usersService, userService, json).login("Antonette").getOrElse { fail() }
+    val user = users.login("Antonette").getOrElse { fail() }
 
     assertEquals(2, user.id)
     assertEquals("Ervin Howell", user.name)
@@ -79,10 +75,10 @@ class UsersServiceTest {
   fun `empty json means unsuccessful login`() = runTest {
     serverRule.enqueue(
       MockResponse()
-        .setBody("""{}""")
+        .setBody("""[]""")
         .addHeader("Content-Type", "application/json; charset=utf-8")
     )
-    val result = NetworkUsers(usersService, userService, json).login("Antonette")
+    val result = users.login("Antonette")
     assertIs<InvalidUsernameException>(result.exceptionOrNull())
   }
 
@@ -90,31 +86,34 @@ class UsersServiceTest {
   fun `invalid server response throws SerializationException`() = runTest {
     serverRule.enqueue(
       MockResponse()
-        .setBody("""{
+        .setBody(
+          """{
             "id": 2,
             "name": "Ervin Howell",
             "username": "Antonette",
             "email": "Shanna@melissa.tv"
-          }""".trimIndent())
+          }""".trimIndent()
+        )
         .addHeader("Content-Type", "application/json; charset=utf-8")
     )
-    NetworkUsers(usersService, userService, json).login("Whatever")
+    users.login("Whatever")
   }
 
   @Test
   fun `connection errors are handled`() = runTest {
     serverRule.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
-    val result = NetworkUsers(usersService, userService, json).login("Antonette")
+    val result = users.login("Antonette")
     assertTrue { result.isFailure }
     assertIs<NetworkError>(result.exceptionOrNull())
   }
 }
 
-class UserServiceTest {
-  @JvmField @Rule
+class NetworkUserTest {
+  @JvmField
+  @Rule
   val serverRule = MockWebServerRule()
-  private lateinit var userService: UserService
-  private lateinit var serviceLocator: ServiceLocator
+
+  private lateinit var user: NetworkUser
 
   @Before
   fun setup() {
@@ -122,9 +121,12 @@ class UserServiceTest {
       override val baseUrl = serverRule.url("/").toString()
       override val interceptors = emptySet<Interceptor>()
     }
-    serviceLocator = ServiceLocator()
-    serviceLocator.createRetrofit(networkParams)
-    userService = serviceLocator.userService
+    val sl = ServiceLocator()
+    sl.createRetrofit(networkParams)
+
+    // user params are not used in these tests. we just use its apis
+    val userDto = NetworkUserDto(1, "Ali", "Alavi", NetworkEmail("a@b.com"))
+    user = sl.userFactory(userDto)
   }
 
   @Test
@@ -148,8 +150,6 @@ class UserServiceTest {
       """.trimIndent()
       ).addHeader("Content-Type", "application/json; charset=utf-8")
     )
-    val userDto = NetworkUserDto(1, "Ali", "Alavi", NetworkEmail("a@b.com"))
-    val user = NetworkUser(userDto, userService)
     val userTodos = user.todoList().getOrElse { fail() }
 
     assertEquals(2, userTodos.size)
