@@ -5,6 +5,13 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import me.farahani.jiringtest.domain.InvalidUsernameException
+import me.farahani.jiringtest.network.NetworkEmail
+import me.farahani.jiringtest.network.NetworkError
+import me.farahani.jiringtest.network.NetworkTodo
+import me.farahani.jiringtest.network.NetworkUser
+import me.farahani.jiringtest.network.NetworkUserDto
+import me.farahani.jiringtest.network.NetworkUsers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse

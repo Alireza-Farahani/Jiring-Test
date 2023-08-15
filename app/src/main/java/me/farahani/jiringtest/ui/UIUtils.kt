@@ -1,4 +1,4 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.ui
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable

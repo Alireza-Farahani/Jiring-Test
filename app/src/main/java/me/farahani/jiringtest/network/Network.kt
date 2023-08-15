@@ -1,9 +1,14 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.network
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import me.farahani.jiringtest.domain.Email
+import me.farahani.jiringtest.domain.InvalidUsernameException
+import me.farahani.jiringtest.domain.Todo
+import me.farahani.jiringtest.domain.User
+import me.farahani.jiringtest.domain.Users
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

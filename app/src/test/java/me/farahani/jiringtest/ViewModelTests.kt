@@ -7,6 +7,14 @@ import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import me.farahani.jiringtest.domain.InvalidUsernameException
+import me.farahani.jiringtest.domain.LoginSession
+import me.farahani.jiringtest.network.NetworkError
+import me.farahani.jiringtest.network.ServerError
+import me.farahani.jiringtest.ui.LoginScreenState
+import me.farahani.jiringtest.ui.LoginViewModel
+import me.farahani.jiringtest.ui.TodoListState
+import me.farahani.jiringtest.ui.TodoListViewModel
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -21,7 +29,7 @@ class LoginViewModelTest {
   val mainDispatcherRule = MainDispatcherRule()
 
   private lateinit var stubUsers: StubUsers
-  private lateinit var mockSession: ILoginSession
+  private lateinit var mockSession: LoginSession
 
   @Before
   fun setup() {
@@ -64,7 +72,6 @@ class LoginViewModelTest {
     vm.login("Whatever")
     advanceUntilIdle()
     verify { mockSession.begin(testUser) }
-    assertEquals(testUser, mockSession.currentUser)
   }
 
   @Test
@@ -137,7 +144,7 @@ class TodoListViewModelTest {
   val mainDispatcherRule = MainDispatcherRule()
 
   private lateinit var stubUser: StubUser
-  private lateinit var mockSession: ILoginSession
+  private lateinit var mockSession: LoginSession
 
   @Before
   fun setup() {

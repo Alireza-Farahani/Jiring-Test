@@ -1,7 +1,8 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.localdata
 
 import android.content.Context
 import androidx.core.content.edit
+import me.farahani.jiringtest.domain.Storage
 
 class AndroidSharedPrefStorage(
   appContext: Context,

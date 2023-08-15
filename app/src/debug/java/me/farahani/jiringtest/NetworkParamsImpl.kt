@@ -1,5 +1,6 @@
 package me.farahani.jiringtest
 
+import me.farahani.jiringtest.network.NetworkParams
 import okhttp3.logging.HttpLoggingInterceptor
 
 

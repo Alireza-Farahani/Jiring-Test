@@ -1,10 +1,4 @@
-package me.farahani.jiringtest
-
-interface Storage {
-  fun put(key: String, value: String)
-  fun get(key: String): String?
-  fun remove(key: String)
-}
+package me.farahani.jiringtest.domain
 
 interface Email {
   val value: String
@@ -32,4 +26,15 @@ interface Todo {
   data class UpdateParams(var title: String, var isComplete: Boolean)
 
   suspend fun update(changes: UpdateParams.() -> Unit): Result<Todo>
+}
+
+interface StringSerializer<T> {
+  fun asString(value: T): String
+  fun fromString(string: String): T
+}
+
+interface Storage {
+  fun put(key: String, value: String)
+  fun get(key: String): String?
+  fun remove(key: String)
 }

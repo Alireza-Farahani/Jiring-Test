@@ -1,4 +1,4 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.ui
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import me.farahani.jiringtest.JiringApplication
+import me.farahani.jiringtest.R
+import me.farahani.jiringtest.domain.InvalidUsernameException
+import me.farahani.jiringtest.domain.LoginSession
+import me.farahani.jiringtest.domain.Todo
+import me.farahani.jiringtest.domain.Users
 
 
 sealed interface LoginScreenState {
@@ -21,7 +27,7 @@ sealed interface LoginScreenState {
   data class Error(val message: UIString) : LoginScreenState
 }
 
-class LoginViewModel(private val users: Users, private val loginSession: ILoginSession) :
+class LoginViewModel(private val users: Users, private val loginSession: LoginSession) :
   ViewModel() {
 
   companion object {
@@ -87,7 +93,7 @@ sealed interface TodoListState {
   data class Ready(val todoList: List<Todo>) : TodoListState
 }
 
-class TodoListViewModel(private val loginSession: ILoginSession) : ViewModel() {
+class TodoListViewModel(private val loginSession: LoginSession) : ViewModel() {
 
   companion object {
     val Factory: ViewModelProvider.Factory = viewModelFactory {

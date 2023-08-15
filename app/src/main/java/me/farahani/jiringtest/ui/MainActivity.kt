@@ -1,4 +1,4 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import me.farahani.jiringtest.JiringApplication
 import me.farahani.jiringtest.ui.theme.JiringTestTheme
 
 class MainActivity : ComponentActivity() {

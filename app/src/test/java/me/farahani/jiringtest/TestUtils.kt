@@ -1,6 +1,12 @@
 package me.farahani.jiringtest
 
 import kotlinx.coroutines.yield
+import me.farahani.jiringtest.domain.Email
+import me.farahani.jiringtest.domain.Todo
+import me.farahani.jiringtest.domain.User
+import me.farahani.jiringtest.domain.Users
+import me.farahani.jiringtest.network.NetworkEmail
+import me.farahani.jiringtest.network.NetworkError
 
 class StubUsers : Users {
   var loginResponse: Result<User> = Result.failure(NetworkError())

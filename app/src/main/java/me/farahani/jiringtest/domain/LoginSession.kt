@@ -1,22 +1,20 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.domain
 
 import kotlinx.serialization.json.Json
+import me.farahani.jiringtest.network.NetworkEmail
+import me.farahani.jiringtest.network.NetworkUser
+import me.farahani.jiringtest.network.NetworkUserDto
 
-interface ILoginSession {
+interface LoginSession {
   val currentUser: User?
   fun begin(user: User)
   fun end()
 }
 
-interface StringSerializer<T> {
-  fun asString(value: T): String
-  fun fromString(string: String): T
-}
-
 class DefaultLoginSession(
   private val storage: Storage,
   private val userSerializer: StringSerializer<User>,
-) : ILoginSession {
+) : LoginSession {
   private var _currentUser: User? = null
 
   init {

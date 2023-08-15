@@ -1,4 +1,4 @@
-package me.farahani.jiringtest
+package me.farahani.jiringtest.ui
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.widget.Toast
@@ -41,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import me.farahani.jiringtest.R
+import me.farahani.jiringtest.domain.Todo
 import me.farahani.jiringtest.ui.theme.JiringTestTheme
 
 @Composable
