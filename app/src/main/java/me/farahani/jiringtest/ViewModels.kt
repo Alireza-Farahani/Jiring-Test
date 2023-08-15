@@ -17,11 +17,12 @@ import kotlinx.coroutines.launch
 
 sealed interface LoginScreenState {
   data object Loading : LoginScreenState
-  data object IDLE : LoginScreenState
+  data object Idle : LoginScreenState
   data class Error(val message: UIString) : LoginScreenState
 }
 
-class LoginViewModel(private val users: Users, private val session: Session) : ViewModel() {
+class LoginViewModel(private val users: Users, private val loginSession: ILoginSession) :
+  ViewModel() {
 
   companion object {
     val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -30,12 +31,12 @@ class LoginViewModel(private val users: Users, private val session: Session) : V
         val app =
           (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as JiringApplication)
         val serviceLocator = app.serviceLocator
-        LoginViewModel(serviceLocator.users, serviceLocator.session)
+        LoginViewModel(serviceLocator.users, serviceLocator.loginSession)
       }
     }
   }
 
-  private val _uiState: MutableStateFlow<LoginScreenState> = MutableStateFlow(LoginScreenState.IDLE)
+  private val _uiState: MutableStateFlow<LoginScreenState> = MutableStateFlow(LoginScreenState.Idle)
   val uiState = _uiState.asStateFlow()
   private val _navigateToTodos = MutableSharedFlow<Unit>()
   val navigateToTodos = _navigateToTodos.asSharedFlow()
@@ -53,12 +54,11 @@ class LoginViewModel(private val users: Users, private val session: Session) : V
       _uiState.value = LoginScreenState.Loading
       users.login(username)
         .onSuccess {
-          session.currentUser = it
-          _uiState.value = LoginScreenState.IDLE
+          loginSession.begin(it)
+          _uiState.value = LoginScreenState.Idle
           _navigateToTodos.emit(Unit)
         }
         .onFailure {
-          session.currentUser = null
           when (it) {
             is InvalidUsernameException -> {
               _uiState.value = LoginScreenState.Error(
@@ -67,7 +67,7 @@ class LoginViewModel(private val users: Users, private val session: Session) : V
             }
 
             else -> {
-              _uiState.value = LoginScreenState.IDLE
+              _uiState.value = LoginScreenState.Idle
               _errorEvent.emit(it)
             }
           }
@@ -87,7 +87,7 @@ sealed interface TodoListState {
   data class Ready(val todoList: List<Todo>) : TodoListState
 }
 
-class TodoListViewModel(private val session: Session) : ViewModel() {
+class TodoListViewModel(private val loginSession: ILoginSession) : ViewModel() {
 
   companion object {
     val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -96,7 +96,7 @@ class TodoListViewModel(private val session: Session) : ViewModel() {
         val app =
           (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as JiringApplication)
         val serviceLocator = app.serviceLocator
-        TodoListViewModel(serviceLocator.session)
+        TodoListViewModel(serviceLocator.loginSession)
       }
     }
   }
@@ -104,7 +104,7 @@ class TodoListViewModel(private val session: Session) : ViewModel() {
   private var currentTodoList = mutableListOf<Todo>()
 
   private val initialState =
-    TodoListScreenState(session.currentUser?.name.orEmpty(), TodoListState.Ready(emptyList()))
+    TodoListScreenState(loginSession.currentUser?.name.orEmpty(), TodoListState.Ready(emptyList()))
   private val _uiState: MutableStateFlow<TodoListScreenState> = MutableStateFlow(initialState)
   val uiState = _uiState.asStateFlow()
 
@@ -115,7 +115,7 @@ class TodoListViewModel(private val session: Session) : ViewModel() {
   val errorEvent = _errorEvent.asSharedFlow()
 
   private val user
-    get() = requireNotNull(session.currentUser) {
+    get() = requireNotNull(loginSession.currentUser) {
       "Session's user is null. Doing something after logout?"
     }
 
@@ -139,7 +139,7 @@ class TodoListViewModel(private val session: Session) : ViewModel() {
   }
 
   fun logout() {
-    session.logout()
+    loginSession.end()
     viewModelScope.launch {
       _logoutEvent.emit(Unit)
     }

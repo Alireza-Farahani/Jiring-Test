@@ -11,6 +11,7 @@ junit = "4.13.2"
 kotlin = "1.9.0"
 kotlin-serialization = "1.5.1"
 lifecycle = "2.6.1"
+mockk = "1.13.7"
 okhttp = "4.11.0"
 navigation = "2.7.0"
 retrofit = "2.9.0"
@@ -31,6 +32,7 @@ kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit"
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp" }

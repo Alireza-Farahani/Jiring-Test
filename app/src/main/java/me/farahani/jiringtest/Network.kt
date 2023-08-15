@@ -1,17 +1,22 @@
 package me.farahani.jiringtest
 
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.Retrofit
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 interface NetworkParams {
   val baseUrl: String
@@ -46,7 +51,7 @@ data class NetworkUserDto(
 )
 
 class NetworkUser(
-  dto: NetworkUserDto,
+  private val dto: NetworkUserDto,
   private val api: UserService,
 //  private val todoApi: TodoService,
   private val todoFactory: (NetworkTodoDto) -> NetworkTodo,
@@ -77,11 +82,16 @@ data class NetworkTodoDto(
   var isCompleted: Boolean,
 )
 
-class NetworkTodo(dto: NetworkTodoDto, private val api: TodoService) : Todo {
-  override val userId by dto::userId
-  override val id by dto::id
-  override val title by dto::title
-  override val isCompleted by dto::isCompleted
+class NetworkTodo(
+  override val userId: Int,
+  override val id: Int,
+  override val title: String,
+  override val isCompleted: Boolean,
+  private val api: TodoService,
+) : Todo {
+  constructor(dto: NetworkTodoDto, api: TodoService) : this(
+    dto.userId, dto.id, dto.title, dto.isCompleted, api
+  )
 
   override suspend fun update(changes: Todo.UpdateParams.() -> Unit): Result<Todo> {
     val updateParams = Todo.UpdateParams(title, isCompleted)
@@ -136,4 +146,18 @@ suspend fun <R> errorHandle(block: suspend () -> Response<R>): Result<R> {
     in 400..<500 -> Result.failure(ClientError(code))
     else -> throw IllegalStateException("Unexpected Http Error with code $code")
   }
+}
+
+fun createRetrofit(params: NetworkParams, json: Json): Retrofit {
+  return Retrofit.Builder()
+    .baseUrl(params.baseUrl)
+    .client(
+      OkHttpClient.Builder()
+        .callTimeout(5, TimeUnit.SECONDS)
+        .apply {
+          params.interceptors.forEach { addInterceptor(it) }
+        }.build()
+    )
+    .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+    .build()
 }

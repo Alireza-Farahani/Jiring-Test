@@ -1,9 +1,9 @@
 package me.farahani.jiringtest
 
-class Session(var currentUser: User? = null) {
-  fun logout() {
-    currentUser = null
-  }
+interface Storage {
+  fun put(key: String, value: String)
+  fun get(key: String): String?
+  fun remove(key: String)
 }
 
 interface Email {

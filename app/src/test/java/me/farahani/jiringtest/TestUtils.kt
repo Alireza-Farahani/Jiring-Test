@@ -3,10 +3,10 @@ package me.farahani.jiringtest
 import kotlinx.coroutines.yield
 
 class StubUsers : Users {
-  var response: Result<User> = Result.failure(NetworkError())
+  var loginResponse: Result<User> = Result.failure(NetworkError())
   override suspend fun login(username: String): Result<User> {
     yield() // otherwise no intermediate state is dispatched
-    return response
+    return loginResponse
   }
 }
 

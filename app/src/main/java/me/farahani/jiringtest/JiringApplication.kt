@@ -12,7 +12,6 @@ class JiringApplication : Application(){
   }
 
   private fun initServiceLocator() {
-    serviceLocator = ServiceLocator()
-    serviceLocator.createRetrofit(NetworkParamsImpl)
+    serviceLocator = ServiceLocator(this)
   }
 }

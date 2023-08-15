@@ -1,18 +1,24 @@
 package me.farahani.jiringtest
 
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
-import okhttp3.Interceptor
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.SocketPolicy
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.Retrofit
+import retrofit2.create
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.test.fail
-
 
 class NetworkUsersTest {
   private lateinit var users: NetworkUsers
@@ -23,13 +29,17 @@ class NetworkUsersTest {
 
   @Before
   fun setup() {
-    val networkParams = object : NetworkParams {
-      override val baseUrl = serverRule.url("/").toString()
-      override val interceptors = emptySet<Interceptor>()
-    }
-    val sl = ServiceLocator()
-    sl.createRetrofit(networkParams)
-    users = NetworkUsers(sl.usersApi, sl.userFactory, sl.json)
+    val json = Json { ignoreUnknownKeys = true }
+    val retrofit = Retrofit.Builder()
+      .baseUrl(serverRule.url("/").toString())
+      .client(
+        OkHttpClient.Builder()
+          .callTimeout(1, TimeUnit.SECONDS)
+          .build()
+      )
+      .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+      .build()
+    users = NetworkUsers(retrofit.create(), { dto -> NetworkUser(dto, mockk(), mockk()) }, json)
   }
 
   @Test
@@ -117,16 +127,19 @@ class NetworkUserTest {
 
   @Before
   fun setup() {
-    val networkParams = object : NetworkParams {
-      override val baseUrl = serverRule.url("/").toString()
-      override val interceptors = emptySet<Interceptor>()
-    }
-    val sl = ServiceLocator()
-    sl.createRetrofit(networkParams)
-
+    val json = Json { ignoreUnknownKeys = true }
+    val retrofit = Retrofit.Builder()
+      .baseUrl(serverRule.url("/").toString())
+      .client(
+        OkHttpClient.Builder()
+          .callTimeout(1, TimeUnit.SECONDS)
+          .build()
+      )
+      .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+      .build()
     // user params are not used in these tests. we just use its apis
-    val userDto = NetworkUserDto(1, "Ali", "Alavi", NetworkEmail("a@b.com"))
-    user = sl.userFactory(userDto)
+    val stubDto = NetworkUserDto(1, "Ali", "Alavi", NetworkEmail("a@b.com"))
+    user = NetworkUser(stubDto, retrofit.create()) { dto -> NetworkTodo(dto, retrofit.create()) }
   }
 
   @Test

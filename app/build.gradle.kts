@@ -13,7 +13,7 @@ android {
     applicationId = "me.farahani.jiringtest"
     minSdk = 24
     //noinspection OldTargetApi
-    targetSdk = 33
+    targetSdk = 34
     versionCode = 1
     versionName = "1.0"
 
@@ -73,6 +73,7 @@ dependencies {
   testApi(libs.kotlin.test.junit)
   testImplementation(libs.junit)
   testImplementation(libs.kotlin.coroutines.test)
+  testImplementation(libs.mockk)
   testImplementation(libs.okhttp.mockwebserver)
   testImplementation(libs.turbine)
   androidTestImplementation(platform(libs.compose.bom))
